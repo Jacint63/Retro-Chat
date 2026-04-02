@@ -5,9 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="PixelChat">
 <meta name="theme-color" content="#00ff41">
+<link rel="manifest" href="./manifest.json">
 <title>PIXEL CHAT</title>
-<link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;PixelChat&quot;,&quot;short_name&quot;:&quot;PixelChat&quot;,&quot;description&quot;:&quot;Chat P2P retro sin internet&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%23000000&quot;,&quot;theme_color&quot;:&quot;%2300ff41&quot;,&quot;orientation&quot;:&quot;portrait&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==&quot;,&quot;sizes&quot;:&quot;192x192&quot;,&quot;type&quot;:&quot;image/png&quot;}]}">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -23,11 +25,10 @@
     --blue: #0088ff;
     --bg: #0a0a0a;
     --panel: #111111;
-    --border: 3px solid var(--green);
     --pixel: 'Press Start 2P', monospace;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; image-rendering: pixelated; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; image-rendering: pixelated; }
 
   html, body {
     height: 100%;
@@ -37,7 +38,6 @@
     overflow: hidden;
   }
 
-  /* CRT scanline effect */
   body::after {
     content: '';
     position: fixed;
@@ -53,7 +53,6 @@
     z-index: 9999;
   }
 
-  /* CRT flicker */
   @keyframes flicker {
     0%, 100% { opacity: 1; }
     92% { opacity: 1; }
@@ -76,9 +75,7 @@
 
   .scanline {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
     height: 4px;
     background: rgba(0,255,65,0.08);
     animation: scanline 6s linear infinite;
@@ -86,16 +83,6 @@
     z-index: 9998;
   }
 
-  /* PIXEL BORDER MIXIN */
-  .pixel-box {
-    border: 3px solid var(--green);
-    box-shadow:
-      inset 0 0 0 1px var(--dark-green),
-      0 0 10px rgba(0,255,65,0.3),
-      0 0 30px rgba(0,255,65,0.1);
-  }
-
-  /* MAIN LAYOUT */
   .app {
     height: 100vh;
     display: flex;
@@ -105,7 +92,6 @@
     position: relative;
   }
 
-  /* HEADER */
   header {
     background: var(--black);
     border-bottom: 3px solid var(--green);
@@ -124,10 +110,7 @@
     letter-spacing: 2px;
   }
 
-  .logo span {
-    color: var(--yellow);
-    text-shadow: 0 0 10px var(--yellow);
-  }
+  .logo span { color: var(--yellow); text-shadow: 0 0 10px var(--yellow); }
 
   .status-led {
     display: flex;
@@ -138,8 +121,7 @@
   }
 
   .led {
-    width: 10px;
-    height: 10px;
+    width: 10px; height: 10px;
     border-radius: 0;
     background: var(--red);
     box-shadow: 0 0 6px var(--red);
@@ -157,16 +139,9 @@
     50% { opacity: 0.6; }
   }
 
-  /* SCREENS */
-  .screen {
-    display: none;
-    flex-direction: column;
-    flex: 1;
-    overflow: hidden;
-  }
+  .screen { display: none; flex-direction: column; flex: 1; overflow: hidden; }
   .screen.active { display: flex; }
 
-  /* ======= CONNECT SCREEN ======= */
   #screen-connect {
     align-items: center;
     justify-content: center;
@@ -183,16 +158,7 @@
     letter-spacing: 1px;
   }
 
-  .pixel-title .cursor {
-    animation: blink 1s infinite;
-  }
-
-  .role-select {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
-  }
+  .pixel-title .cursor { animation: blink 1s infinite; }
 
   .pixel-btn {
     font-family: var(--pixel);
@@ -207,13 +173,9 @@
     box-shadow: 4px 4px 0 var(--green2);
     letter-spacing: 1px;
     width: 100%;
-    position: relative;
   }
 
-  .pixel-btn::before {
-    content: '▶ ';
-    color: var(--yellow);
-  }
+  .pixel-btn::before { content: '▶ '; color: var(--yellow); }
 
   .pixel-btn:hover, .pixel-btn:active {
     background: var(--dark-green);
@@ -222,23 +184,11 @@
     text-shadow: 0 0 8px var(--green);
   }
 
-  .pixel-btn.danger {
-    color: var(--red);
-    border-color: var(--red);
-    box-shadow: 4px 4px 0 #880000;
-  }
-
+  .pixel-btn.danger { color: var(--red); border-color: var(--red); box-shadow: 4px 4px 0 #880000; }
   .pixel-btn.danger::before { color: var(--red); }
-  .pixel-btn.danger:hover {
-    background: #110000;
-    box-shadow: 2px 2px 0 #880000;
-  }
+  .pixel-btn.danger:hover { background: #110000; box-shadow: 2px 2px 0 #880000; }
 
-  .pixel-btn.secondary {
-    color: var(--yellow);
-    border-color: var(--yellow);
-    box-shadow: 4px 4px 0 #886600;
-  }
+  .pixel-btn.secondary { color: var(--yellow); border-color: var(--yellow); box-shadow: 4px 4px 0 #886600; }
   .pixel-btn.secondary::before { color: var(--yellow); }
   .pixel-btn.secondary:hover { background: #111100; box-shadow: 2px 2px 0 #886600; }
 
@@ -249,6 +199,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    width: 100%;
   }
 
   .divider::before, .divider::after {
@@ -257,7 +208,6 @@
     border-top: 2px solid var(--gray);
   }
 
-  /* CODE BOX */
   .code-box {
     background: var(--black);
     border: 3px solid var(--green);
@@ -274,7 +224,7 @@
   }
 
   .code-value {
-    font-size: 0.5rem;
+    font-size: 0.45rem;
     color: var(--yellow);
     text-shadow: 0 0 8px var(--yellow);
     word-break: break-all;
@@ -296,9 +246,7 @@
   }
 
   .pixel-input::placeholder { color: var(--gray); }
-  .pixel-input:focus {
-    box-shadow: inset 0 0 8px rgba(0,255,65,0.2), 0 0 10px rgba(0,255,65,0.3);
-  }
+  .pixel-input:focus { box-shadow: inset 0 0 8px rgba(0,255,65,0.2), 0 0 10px rgba(0,255,65,0.3); }
 
   .info-text {
     font-size: 0.35rem;
@@ -309,7 +257,58 @@
 
   .info-text span { color: var(--green); }
 
-  /* ======= CHAT SCREEN ======= */
+  #screen-waiting {
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    gap: 16px;
+  }
+
+  .loading-text {
+    font-size: 0.4rem;
+    color: var(--green);
+    text-align: center;
+    line-height: 2.5;
+    animation: blink 1.5s infinite;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 12px;
+    background: var(--black);
+    border: 2px solid var(--green);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: progressAnim 2s steps(20) infinite;
+  }
+
+  @keyframes progressAnim {
+    0% { width: 0%; }
+    50% { width: 80%; }
+    100% { width: 100%; }
+  }
+
+  .copy-btn {
+    font-family: var(--pixel);
+    font-size: 0.35rem;
+    background: var(--black);
+    color: var(--yellow);
+    border: 2px solid var(--yellow);
+    padding: 6px 10px;
+    cursor: pointer;
+    margin-top: 6px;
+    box-shadow: 2px 2px 0 #886600;
+    transition: all 0.1s;
+    width: 100%;
+  }
+
+  .copy-btn:hover { transform: translate(1px,1px); box-shadow: 1px 1px 0 #886600; }
+
   #screen-chat {
     flex: 1;
     overflow: hidden;
@@ -403,7 +402,6 @@
     animation: msgIn 0.2s steps(2) forwards;
   }
 
-  /* TYPING */
   .typing-indicator {
     display: none;
     align-self: flex-start;
@@ -415,18 +413,6 @@
 
   .typing-indicator.show { display: block; }
 
-  @keyframes typingDot {
-    0%, 100% { content: '...'; }
-    33% { content: '.. '; }
-    66% { content: '.  '; }
-  }
-
-  .typing-indicator::after {
-    content: '...';
-    animation: typingDot 1s infinite;
-  }
-
-  /* INPUT AREA */
   .input-area {
     border-top: 3px solid var(--green);
     background: var(--black);
@@ -475,82 +461,6 @@
     box-shadow: 1px 1px 0 var(--green2);
   }
 
-  /* WAITING SCREEN */
-  #screen-waiting {
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    gap: 20px;
-  }
-
-  @keyframes spin {
-    0% { content: '◐'; }
-    25% { content: '◓'; }
-    50% { content: '◑'; }
-    75% { content: '◒'; }
-  }
-
-  .loading-icon {
-    font-size: 1.5rem;
-    color: var(--green);
-    text-shadow: 0 0 20px var(--green);
-    animation: iconSpin 0.5s steps(4) infinite;
-  }
-
-  @keyframes iconSpin {
-    0% { opacity: 1; }
-    25% { opacity: 0.7; }
-    50% { opacity: 1; }
-    75% { opacity: 0.7; }
-  }
-
-  .loading-text {
-    font-size: 0.4rem;
-    color: var(--green);
-    text-align: center;
-    line-height: 2.5;
-    animation: blink 1.5s infinite;
-  }
-
-  .progress-bar {
-    width: 100%;
-    height: 12px;
-    background: var(--black);
-    border: 2px solid var(--green);
-    overflow: hidden;
-  }
-
-  .progress-fill {
-    height: 100%;
-    background: var(--green);
-    box-shadow: 0 0 8px var(--green);
-    animation: progressAnim 2s steps(20) infinite;
-  }
-
-  @keyframes progressAnim {
-    0% { width: 0%; }
-    50% { width: 80%; }
-    100% { width: 100%; }
-  }
-
-  /* COPY BTN */
-  .copy-btn {
-    font-family: var(--pixel);
-    font-size: 0.35rem;
-    background: var(--black);
-    color: var(--yellow);
-    border: 2px solid var(--yellow);
-    padding: 6px 10px;
-    cursor: pointer;
-    margin-top: 6px;
-    box-shadow: 2px 2px 0 #886600;
-    transition: all 0.1s;
-    width: 100%;
-  }
-
-  .copy-btn:hover { transform: translate(1px,1px); box-shadow: 1px 1px 0 #886600; }
-
-  /* DISCONNECT */
   .dc-btn {
     font-family: var(--pixel);
     font-size: 0.35rem;
@@ -569,13 +479,13 @@
     border: 2px dashed var(--red);
     line-height: 2;
     display: none;
+    width: 100%;
   }
   .error-msg.show { display: block; }
 </style>
 </head>
 <body>
 <div class="scanline"></div>
-
 <div class="app">
   <header>
     <div class="logo">PIXEL<span>CHAT</span> v1.0</div>
@@ -585,70 +495,49 @@
     </div>
   </header>
 
-  <!-- CONNECT SCREEN -->
+  <!-- CONNECT -->
   <div class="screen active" id="screen-connect">
-    <div class="pixel-title">
-      &gt; BIENVENIDO_<span class="cursor">█</span><br>
-      ELIGE UNA OPCION:
-    </div>
-
-    <div class="role-select">
+    <div class="pixel-title">&gt; BIENVENIDO_<span class="cursor">█</span><br>ELIGE UNA OPCION:</div>
+    <div style="display:flex;flex-direction:column;gap:10px;width:100%">
       <button class="pixel-btn" onclick="startAsHost()">CREAR SALA</button>
       <div class="divider">O</div>
-      <div style="display:flex;flex-direction:column;gap:8px;width:100%">
-        <div class="pixel-input" style="font-size:0.35rem;padding:6px 10px;color:var(--light-gray);border-color:var(--gray)">UNIRSE CON CODIGO:</div>
-        <textarea class="pixel-input" id="join-code" placeholder="PEGA EL CODIGO AQUI..." rows="3" style="resize:none;height:70px"></textarea>
-        <button class="pixel-btn secondary" onclick="joinAsGuest()">UNIRSE A SALA</button>
-      </div>
+      <textarea class="pixel-input" id="join-code" placeholder="PEGA EL CODIGO AQUI..." rows="3" style="resize:none;height:70px"></textarea>
+      <button class="pixel-btn secondary" onclick="joinAsGuest()">UNIRSE A SALA</button>
     </div>
-
-    <div class="error-msg" id="error-box">ERROR: CODIGO INVALIDO</div>
-
-    <div class="info-text">
-      <span>★</span> FUNCIONA CON INTERNET SOLO<br>
-      LA PRIMERA VEZ PARA CONECTAR<span>★</span>
-    </div>
+    <div class="error-msg" id="error-box">ERROR</div>
+    <div class="info-text"><span>★</span> INTERNET SOLO LA PRIMERA VEZ <span>★</span></div>
   </div>
 
-  <!-- WAITING SCREEN (host) -->
+  <!-- WAITING -->
   <div class="screen" id="screen-waiting">
-    <div class="pixel-title">SALA CREADA</div>
-
+    <div class="pixel-title" id="waiting-title">SALA CREADA</div>
     <div class="code-box">
-      <div class="code-label">▶ COMPARTE ESTE CODIGO:</div>
+      <div class="code-label" id="code-label">▶ COMPARTE ESTE CODIGO:</div>
       <div class="code-value" id="offer-code">GENERANDO...</div>
     </div>
-
     <button class="copy-btn" onclick="copyOffer()">[ COPIAR CODIGO ]</button>
-
-    <div class="divider" style="width:100%">LUEGO</div>
-
-    <div style="width:100%;display:flex;flex-direction:column;gap:8px">
+    <div class="divider" id="answer-divider">LUEGO</div>
+    <div id="answer-section" style="width:100%;display:flex;flex-direction:column;gap:8px">
       <div class="code-label">▶ PEGA EL CODIGO DE TU CONTACTO:</div>
       <textarea class="pixel-input" id="answer-input" placeholder="CODIGO DEL OTRO..." rows="3" style="resize:none;height:70px"></textarea>
       <button class="pixel-btn secondary" onclick="connectWithAnswer()">CONECTAR</button>
     </div>
-
-    <div class="loading-text">ESPERANDO CONEXION...</div>
+    <div class="loading-text">ESPERANDO...</div>
     <div class="progress-bar"><div class="progress-fill"></div></div>
-
     <button class="pixel-btn danger" onclick="cancelConnect()" style="font-size:0.4rem;padding:10px">CANCELAR</button>
   </div>
 
-  <!-- CHAT SCREEN -->
+  <!-- CHAT -->
   <div class="screen" id="screen-chat" style="display:none;flex-direction:column;flex:1;overflow:hidden">
     <div class="chat-info">
       <span>CANAL: <span class="peer">P2P-DIRECTO</span></span>
       <button class="dc-btn" onclick="disconnect()">[ SALIR ]</button>
     </div>
-
     <div class="messages" id="messages">
       <div class="system-msg">★ CONEXION ESTABLECIDA ★</div>
-      <div class="system-msg">AHORA PUEDEN CHATEAR SIN INTERNET</div>
+      <div class="system-msg">YA PUEDEN CHATEAR SIN INTERNET</div>
     </div>
-
     <div class="typing-indicator" id="typing">EL OTRO ESCRIBE</div>
-
     <div class="input-area">
       <textarea class="msg-input" id="msg-input" placeholder="ESCRIBE..." rows="1"
         onkeydown="handleKey(event)"
@@ -656,47 +545,33 @@
       <button class="send-btn" onclick="sendMessage()">ENVIAR</button>
     </div>
   </div>
-
 </div>
 
 <script>
-// ─── WebRTC CONFIG ───
 const ICE_SERVERS = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' }
+    { urls: 'stun:stun1.l.google.com:19302' }
   ]
 };
 
-let pc = null;
-let dataChannel = null;
-let isHost = false;
-let typingTimer = null;
+let pc = null, dataChannel = null, typingTimer = null;
 
-// ─── UI HELPERS ───
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => {
-    s.classList.remove('active');
-    s.style.display = 'none';
-  });
+  document.querySelectorAll('.screen').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
   const el = document.getElementById(id);
   el.style.display = 'flex';
   el.classList.add('active');
 }
 
 function setLed(on, text) {
-  const led = document.getElementById('led');
-  const lt = document.getElementById('led-text');
-  led.className = 'led' + (on ? ' on' : '');
-  lt.textContent = text;
+  document.getElementById('led').className = 'led' + (on ? ' on' : '');
+  document.getElementById('led-text').textContent = text;
 }
 
 function addMessage(text, from) {
   const msgs = document.getElementById('messages');
-  const now = new Date();
-  const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-
+  const time = new Date().toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit'});
   if (from === 'system') {
     const el = document.createElement('div');
     el.className = 'system-msg';
@@ -705,11 +580,7 @@ function addMessage(text, from) {
   } else {
     const el = document.createElement('div');
     el.className = 'msg ' + from;
-    el.innerHTML = `
-      <div class="msg-header">${from === 'me' ? 'YO' : 'CONTACTO'}</div>
-      <div class="msg-bubble">${escapeHtml(text)}</div>
-      <div class="msg-time">${time}</div>
-    `;
+    el.innerHTML = `<div class="msg-header">${from==='me'?'YO':'CONTACTO'}</div><div class="msg-bubble">${escapeHtml(text)}</div><div class="msg-time">${time}</div>`;
     msgs.appendChild(el);
   }
   msgs.scrollTop = msgs.scrollHeight;
@@ -726,10 +597,8 @@ function showError(msg) {
   setTimeout(() => el.classList.remove('show'), 4000);
 }
 
-// ─── PEER CONNECTION ───
 function createPC() {
   pc = new RTCPeerConnection(ICE_SERVERS);
-
   pc.oniceconnectionstatechange = () => {
     if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
       setLed(true, 'ONLINE');
@@ -738,16 +607,12 @@ function createPC() {
       addMessage('★ CONEXION PERDIDA ★', 'system');
     }
   };
-
   return pc;
 }
 
 function setupDataChannel(ch) {
   dataChannel = ch;
-  dataChannel.onopen = () => {
-    showScreen('screen-chat');
-    setLed(true, 'ONLINE');
-  };
+  dataChannel.onopen = () => { showScreen('screen-chat'); setLed(true, 'ONLINE'); };
   dataChannel.onmessage = (e) => {
     try {
       const data = JSON.parse(e.data);
@@ -757,120 +622,74 @@ function setupDataChannel(ch) {
       } else if (data.type === 'typing') {
         document.getElementById('typing').classList.add('show');
         clearTimeout(typingTimer);
-        typingTimer = setTimeout(() => {
-          document.getElementById('typing').classList.remove('show');
-        }, 2000);
+        typingTimer = setTimeout(() => document.getElementById('typing').classList.remove('show'), 2000);
       }
-    } catch(e) {
-      addMessage(e.data, 'them');
-    }
+    } catch(e) { addMessage(e.data, 'them'); }
   };
-  dataChannel.onclose = () => {
-    setLed(false, 'OFFLINE');
-  };
+  dataChannel.onclose = () => setLed(false, 'OFFLINE');
 }
 
-// ─── HOST ───
+async function waitForICE() {
+  await new Promise(resolve => {
+    if (pc.iceGatheringState === 'complete') return resolve();
+    pc.onicegatheringstatechange = () => { if (pc.iceGatheringState === 'complete') resolve(); };
+    setTimeout(resolve, 4000);
+  });
+}
+
 async function startAsHost() {
-  isHost = true;
   createPC();
   dataChannel = pc.createDataChannel('chat');
   setupDataChannel(dataChannel);
-
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
-
   showScreen('screen-waiting');
-
-  // Wait for ICE gathering
-  await new Promise(resolve => {
-    if (pc.iceGatheringState === 'complete') return resolve();
-    pc.onicegatheringstatechange = () => {
-      if (pc.iceGatheringState === 'complete') resolve();
-    };
-    setTimeout(resolve, 4000); // fallback
-  });
-
-  const code = btoa(JSON.stringify(pc.localDescription));
-  document.getElementById('offer-code').textContent = code;
+  await waitForICE();
+  document.getElementById('offer-code').textContent = btoa(JSON.stringify(pc.localDescription));
 }
 
 async function connectWithAnswer() {
   const raw = document.getElementById('answer-input').value.trim();
   if (!raw) return showError('PEGA EL CODIGO');
   try {
-    const answer = JSON.parse(atob(raw));
-    await pc.setRemoteDescription(answer);
-  } catch(e) {
-    showError('CODIGO INVALIDO');
-  }
+    await pc.setRemoteDescription(JSON.parse(atob(raw)));
+  } catch(e) { showError('CODIGO INVALIDO'); }
 }
 
-// ─── GUEST ───
 async function joinAsGuest() {
   const raw = document.getElementById('join-code').value.trim();
   if (!raw) return showError('PEGA EL CODIGO PRIMERO');
-
   try {
     const offer = JSON.parse(atob(raw));
     createPC();
-
     pc.ondatachannel = (e) => setupDataChannel(e.channel);
-
     await pc.setRemoteDescription(offer);
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
-
     showScreen('screen-waiting');
-    document.querySelector('#screen-waiting .pixel-title').textContent = 'CONECTANDO...';
-    document.querySelector('#screen-waiting .loading-text').textContent = 'COPIA TU CODIGO Y ENVIALO';
-
-    await new Promise(resolve => {
-      if (pc.iceGatheringState === 'complete') return resolve();
-      pc.onicegatheringstatechange = () => {
-        if (pc.iceGatheringState === 'complete') resolve();
-      };
-      setTimeout(resolve, 4000);
-    });
-
-    const code = btoa(JSON.stringify(pc.localDescription));
-    document.getElementById('offer-code').textContent = code;
-    document.querySelector('#screen-waiting .code-label').textContent = '▶ ENVIA ESTE CODIGO AL CREADOR:';
-    document.querySelector('.copy-btn').textContent = '[ COPIAR MI CODIGO ]';
-
-    // Hide the answer input section for guest
-    document.getElementById('answer-input').closest('div').style.display = 'none';
-
-  } catch(e) {
-    showError('CODIGO INVALIDO O EXPIRADO');
-  }
+    document.getElementById('waiting-title').textContent = 'CONECTANDO...';
+    document.getElementById('code-label').textContent = '▶ ENVIA ESTE CODIGO AL CREADOR:';
+    document.getElementById('answer-section').style.display = 'none';
+    document.getElementById('answer-divider').style.display = 'none';
+    await waitForICE();
+    document.getElementById('offer-code').textContent = btoa(JSON.stringify(pc.localDescription));
+  } catch(e) { showError('CODIGO INVALIDO'); }
 }
 
-// ─── COPY ───
 function copyOffer() {
   const code = document.getElementById('offer-code').textContent;
-  navigator.clipboard.writeText(code).then(() => {
-    document.querySelector('.copy-btn').textContent = '[ ✓ COPIADO! ]';
-    setTimeout(() => document.querySelector('.copy-btn').textContent = '[ COPIAR CODIGO ]', 2000);
-  }).catch(() => {
-    // Fallback
+  navigator.clipboard.writeText(code).catch(() => {
     const ta = document.createElement('textarea');
-    ta.value = code;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    document.querySelector('.copy-btn').textContent = '[ ✓ COPIADO! ]';
-    setTimeout(() => document.querySelector('.copy-btn').textContent = '[ COPIAR CODIGO ]', 2000);
+    ta.value = code; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
   });
+  document.querySelector('.copy-btn').textContent = '[ ✓ COPIADO! ]';
+  setTimeout(() => document.querySelector('.copy-btn').textContent = '[ COPIAR CODIGO ]', 2000);
 }
 
-// ─── SEND ───
 function sendMessage() {
   const input = document.getElementById('msg-input');
   const text = input.value.trim();
   if (!text || !dataChannel || dataChannel.readyState !== 'open') return;
-
   dataChannel.send(JSON.stringify({ type: 'msg', text }));
   addMessage(text, 'me');
   input.value = '';
@@ -878,16 +697,11 @@ function sendMessage() {
 }
 
 function sendTyping() {
-  if (dataChannel && dataChannel.readyState === 'open') {
-    dataChannel.send(JSON.stringify({ type: 'typing' }));
-  }
+  if (dataChannel && dataChannel.readyState === 'open') dataChannel.send(JSON.stringify({ type: 'typing' }));
 }
 
 function handleKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 }
 
 function autoResize(el) {
@@ -895,47 +709,21 @@ function autoResize(el) {
   el.style.height = Math.min(el.scrollHeight, 100) + 'px';
 }
 
-// ─── DISCONNECT ───
 function disconnect() {
   if (dataChannel) dataChannel.close();
   if (pc) pc.close();
-  pc = null;
-  dataChannel = null;
+  pc = null; dataChannel = null;
   setLed(false, 'OFFLINE');
   showScreen('screen-connect');
-  document.getElementById('join-code').value = '';
 }
 
-function cancelConnect() {
-  disconnect();
-}
+function cancelConnect() { disconnect(); }
 
-// ─── PWA SERVICE WORKER (inline) ───
+// ─── SERVICE WORKER ───
 if ('serviceWorker' in navigator) {
-  const swCode = `
-const CACHE = 'pixelchat-v1';
-self.addEventListener('install', e => {
-  self.skipWaiting();
-});
-self.addEventListener('activate', e => {
-  self.clients.claim();
-});
-self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(r => {
-      if (r) return r;
-      return fetch(e.request).then(res => {
-        const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
-        return res;
-      }).catch(() => caches.match(e.request));
-    })
-  );
-});
-`;
-  const blob = new Blob([swCode], { type: 'application/javascript' });
-  const swUrl = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl).catch(() => {});
+  navigator.serviceWorker.register('./sw.js')
+    .then(() => console.log('SW registrado'))
+    .catch(e => console.log('SW error:', e));
 }
 </script>
 </body>
