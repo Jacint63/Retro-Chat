@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="PixelChat">
+<meta name="theme-color" content="#00ff41">
+<title>PIXEL CHAT</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root{
+  --black:#000000;--white:#ffffff;--green:#00ff41;--green2:#00cc33;
+  --dark-green:#003311;--gray:#333333;--lgray:#888888;
+  --red:#ff0000;--yellow:#ffff00;--blue:#0088ff;
+  --bg:#0a0a0a;--pixel:'Press Start 2P',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;image-rendering:pixelated}
+html,body{height:100%;background:var(--bg);font-family:var(--pixel);color:var(--green);overflow:hidden}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.15) 2px,rgba(0,0,0,.15) 4px);pointer-events:none;z-index:9999}
+@keyframes flicker{0%,100%{opacity:1}93%{opacity:.95}96%{opacity:.98}}
+body{animation:flicker 8s infinite}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes scanline{0%{transform:translateY(-100%)}100%{transform:translateY(100vh)}}
+.scanline{position:fixed;top:0;left:0;right:0;height:4px;background:rgba(0,255,65,.08);animation:scanline 6s linear infinite;pointer-events:none;z-index:9998}
+.app{height:100vh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;overflow:hidden}
+header{background:var(--black);border-bottom:3px solid var(--green);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 0 20px rgba(0,255,65,.4);flex-shrink:0}
+.logo{font-size:.55rem;color:var(--green);text-shadow:0 0 10px var(--green);letter-spacing:2px}
+.logo span{color:var(--yellow);text-shadow:0 0 10px var(--yellow)}
+.status-led{display:flex;align-items:center;gap:8px;font-size:.4rem;color:var(--lgray)}
+.led{width:10px;height:10px;background:var(--red);box-shadow:0 0 6px var(--red);transition:all .3s}
+.led.on{background:var(--green);box-shadow:0 0 10px var(--green);animation:ledPulse 2s infinite}
+@keyframes ledPulse{0%,100%{opacity:1}50%{opacity:.6}}
+.screen{display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0}
+.screen.active{display:flex}
+
+/* SETUP */
+#screen-setup{align-items:center;justify-content:center;padding:24px 20px;gap:16px}
+
+/* MAIN */
+#screen-main{align-items:center;justify-content:flex-start;padding:20px;gap:14px;overflow-y:auto}
+
+.pixel-title{font-size:.5rem;color:var(--green);text-shadow:0 0 15px var(--green);text-align:center;line-height:2;letter-spacing:1px;width:100%}
+.cursor{animation:blink 1s infinite}
+
+.pixel-btn{font-family:var(--pixel);font-size:.48rem;padding:13px 16px;background:var(--black);color:var(--green);border:3px solid var(--green);cursor:pointer;text-align:left;transition:all .1s;box-shadow:4px 4px 0 var(--green2);letter-spacing:1px;width:100%}
+.pixel-btn::before{content:'▶ ';color:var(--yellow)}
+.pixel-btn:active{background:var(--dark-green);transform:translate(2px,2px);box-shadow:2px 2px 0 var(--green2)}
+.pixel-btn.sec{color:var(--yellow);border-color:var(--yellow);box-shadow:4px 4px 0 #886600}
+.pixel-btn.sec::before{color:var(--yellow)}
+.pixel-btn.sec:active{background:#111100;box-shadow:2px 2px 0 #886600}
+.pixel-btn.dan{color:var(--red);border-color:var(--red);box-shadow:4px 4px 0 #880000}
+.pixel-btn.dan::before{color:var(--red)}
+.pixel-btn.dan:active{background:#110000;box-shadow:2px 2px 0 #880000}
+
+.pixel-input{font-family:var(--pixel);font-size:.48rem;background:var(--black);color:var(--green);border:3px solid var(--green);padding:10px 12px;width:100%;outline:none;box-shadow:inset 0 0 8px rgba(0,255,65,.1);letter-spacing:1px}
+.pixel-input::placeholder{color:var(--gray)}
+.pixel-input:focus{box-shadow:inset 0 0 8px rgba(0,255,65,.2),0 0 10px rgba(0,255,65,.3)}
+
+.info-text{font-size:.33rem;color:var(--lgray);text-align:center;line-height:2}
+.info-text span{color:var(--green)}
+
+.id-box{background:var(--black);border:3px solid var(--green);padding:12px;width:100%;box-shadow:inset 0 0 10px rgba(0,255,65,.1)}
+.id-label{font-size:.33rem;color:var(--lgray);margin-bottom:6px;letter-spacing:1px}
+.id-value{font-size:.5rem;color:var(--yellow);text-shadow:0 0 8px var(--yellow);letter-spacing:2px}
+
+.divider{font-size:.38rem;color:var(--lgray);text-align:center;display:flex;align-items:center;gap:8px;width:100%}
+.divider::before,.divider::after{content:'';flex:1;border-top:2px solid var(--gray)}
+
+/* CONNECTING */
+#screen-connecting{align-items:center;justify-content:center;padding:24px;gap:16px}
+.loading-text{font-size:.4rem;color:var(--green);text-align:center;line-height:2.5;animation:blink 1.5s infinite}
+.progress-bar{width:100%;height:10px;background:var(--black);border:2px solid var(--green);overflow:hidden}
+.progress-fill{height:100%;background:var(--green);box-shadow:0 0 8px var(--green);animation:prog 2s steps(20) infinite}
+@keyframes prog{0%{width:0}50%{width:80%}100%{width:100%}}
+
+/* CHAT */
+#screen-chat{position:fixed;top:0;left:0;right:0;bottom:0;display:none;flex-direction:column;max-width:480px;margin:0 auto;background:var(--bg)}
+#screen-chat.active{display:flex}
+.chat-info{background:var(--black);border-bottom:2px solid var(--gray);padding:8px 16px;font-size:.33rem;color:var(--lgray);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;padding-top:max(8px, env(safe-area-inset-top))}
+.chat-info .peer{color:var(--green)}
+.messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin;scrollbar-color:var(--green) var(--black)}
+.messages::-webkit-scrollbar{width:4px}
+.messages::-webkit-scrollbar-track{background:var(--black)}
+.messages::-webkit-scrollbar-thumb{background:var(--green)}
+.msg{max-width:80%;animation:msgIn .15s steps(3) forwards}
+@keyframes msgIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.msg.me{align-self:flex-end}
+.msg.them{align-self:flex-start}
+.msg-header{font-size:.28rem;margin-bottom:4px}
+.msg.me .msg-header{text-align:right;color:var(--blue)}
+.msg.them .msg-header{color:var(--green)}
+.msg-bubble{padding:10px 12px;font-size:.42rem;line-height:1.8;word-break:break-word}
+.msg.me .msg-bubble{background:var(--dark-green);border:2px solid var(--green);border-right:4px solid var(--green);color:var(--white)}
+.msg.them .msg-bubble{background:#0a0a1a;border:2px solid var(--blue);border-left:4px solid var(--blue);color:var(--white)}
+.msg-time{font-size:.26rem;color:var(--gray);margin-top:3px;text-align:right}
+.system-msg{text-align:center;font-size:.33rem;color:var(--yellow);padding:6px;border:1px dashed var(--gray);animation:msgIn .2s steps(2) forwards}
+.typing-ind{display:none;align-self:flex-start;padding:8px 12px;border:2px solid var(--blue);font-size:.38rem;color:var(--blue);flex-shrink:0}
+.typing-ind.show{display:block}
+.input-area{border-top:3px solid var(--green);background:var(--black);padding:10px 12px;display:flex;gap:8px;align-items:center;flex-shrink:0;box-shadow:0 -5px 20px rgba(0,255,65,.2)}
+.msg-input{flex:1;font-family:var(--pixel);font-size:.44rem;background:var(--black);color:var(--green);border:2px solid var(--green);padding:10px;outline:none;resize:none;height:44px;line-height:1.4;scrollbar-width:none}
+.msg-input::placeholder{color:var(--gray)}
+.send-btn{font-family:var(--pixel);font-size:.48rem;background:var(--green);color:var(--black);border:2px solid var(--green2);padding:10px 14px;cursor:pointer;box-shadow:3px 3px 0 var(--green2);transition:all .1s;white-space:nowrap;height:44px}
+.send-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--green2)}
+.dc-btn{font-family:var(--pixel);font-size:.33rem;background:var(--black);color:var(--red);border:1px solid var(--red);padding:4px 8px;cursor:pointer}
+.err-box{font-size:.36rem;color:var(--red);text-align:center;padding:10px;border:2px dashed var(--red);line-height:2;display:none;width:100%}
+.err-box.show{display:block}
+
+/* KEY SCREEN */
+#screen-key{align-items:center;justify-content:center;padding:24px 20px;gap:16px}
+.lock-icon{font-size:2rem;text-align:center;filter:drop-shadow(0 0 10px var(--green))}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="app">
+  <header>
+    <div class="logo">PIXEL<span>CHAT</span> v3.0</div>
+    <div class="status-led">
+      <div class="led" id="led"></div>
+      <span id="led-text">OFFLINE</span>
+    </div>
+  </header>
+
+  <!-- SETUP: elegir ID primera vez -->
+  <div class="screen active" id="screen-setup">
+    <div class="pixel-title">&gt; PIXEL CHAT_<span class="cursor">█</span></div>
+    <div style="width:100%;display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:.33rem;color:var(--lgray);letter-spacing:1px">▶ ELIGE TU ID (solo letras y números):</div>
+      <input class="pixel-input" id="setup-id" type="text" maxlength="20"
+        placeholder="EJ: NICOLAS123"
+        style="text-transform:uppercase"
+        onkeydown="if(event.key==='Enter')saveID()">
+      <button class="pixel-btn" onclick="saveID()">GUARDAR Y CONTINUAR</button>
+    </div>
+    <div class="err-box" id="setup-err">ID INVÁLIDO</div>
+    <div class="info-text"><span>★</span> ESTE ID LO USARÁS SIEMPRE <span>★</span><br>SOLO LETRAS Y NÚMEROS, SIN ESPACIOS</div>
+  </div>
+
+  <!-- MAIN: pantalla principal -->
+  <div class="screen" id="screen-main">
+    <div class="pixel-title" id="main-title" style="font-size:.44rem">LISTO_<span class="cursor">█</span></div>
+
+    <div class="id-box">
+      <div class="id-label">▶ TU ID (compártelo con tus contactos):</div>
+      <div class="id-value" id="my-id-display">...</div>
+    </div>
+
+    <div class="divider">CONECTAR</div>
+
+    <div style="width:100%;display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:.33rem;color:var(--lgray);letter-spacing:1px">▶ ID DEL OTRO:</div>
+      <input class="pixel-input" id="peer-id-input" type="text" maxlength="20"
+        placeholder="ID DEL CONTACTO..."
+        style="text-transform:uppercase"
+        onkeydown="if(event.key==='Enter')connectToPeer()">
+      <button class="pixel-btn" onclick="connectToPeer()">CONECTAR</button>
+    </div>
+
+    <div class="err-box" id="main-err"></div>
+    <div class="info-text"><span>★</span> NECESITAS INTERNET PARA CONECTAR <span>★</span><br>LUEGO EL CHAT FUNCIONA SIN INTERNET</div>
+
+    <button class="pixel-btn sec" onclick="changeID()" style="font-size:.38rem;padding:10px">CAMBIAR MI ID</button>
+  </div>
+
+  <!-- CONNECTING -->
+  <div class="screen" id="screen-connecting">
+    <div class="pixel-title" style="font-size:.44rem">CONECTANDO...<span class="cursor">█</span></div>
+    <div class="loading-text" id="connecting-text">BUSCANDO CONTACTO...</div>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+    <button class="pixel-btn dan" onclick="cancelConnect()" style="font-size:.38rem;padding:10px;margin-top:16px">CANCELAR</button>
+  </div>
+
+  <!-- KEY: pedir clave para conversación -->
+  <div class="screen" id="screen-key">
+    <div class="lock-icon">🔒</div>
+    <div class="pixel-title" style="font-size:.44rem">CLAVE SECRETA_<span class="cursor">█</span></div>
+    <div class="info-text">CONVERSACIÓN CON:<br><span id="key-peer-label">???</span></div>
+    <div style="width:100%;display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:.33rem;color:var(--lgray);letter-spacing:1px">▶ CLAVE PARA ESTE CHAT:</div>
+      <input class="pixel-input" id="key-input" type="password" maxlength="64"
+        placeholder="CLAVE SECRETA..."
+        onkeydown="if(event.key==='Enter')confirmKey()">
+      <button class="pixel-btn" onclick="confirmKey()">CONFIRMAR Y CHATEAR</button>
+      <button class="pixel-btn dan" onclick="cancelKey()" style="font-size:.38rem;padding:10px">CANCELAR</button>
+    </div>
+    <div class="err-box" id="key-err">CLAVE INVÁLIDA</div>
+    <div class="info-text"><span>⚠</span> EL HISTORIAL ANTERIOR SERÁ BORRADO<br>ACORDÁ LA CLAVE CON TU CONTACTO</div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="screen" id="screen-chat">
+    <div class="chat-info">
+      <span>CON: <span class="peer" id="peer-name-label">???</span></span>
+      <div style="display:flex;gap:6px">
+        <button class="dc-btn" style="color:var(--yellow);border-color:var(--yellow)" onclick="resetKey()">[ 🔑 CLAVE ]</button>
+        <button class="dc-btn" onclick="disconnect()">[ SALIR ]</button>
+      </div>
+    </div>
+    <div class="messages" id="messages"></div>
+    <div class="typing-ind" id="typing">ESCRIBIENDO...</div>
+    <div class="input-area">
+      <textarea class="msg-input" id="msg-input" placeholder="ESCRIBE..." rows="1"
+        onkeydown="handleKey(event)" oninput="autoResize(this);sendTyping()"></textarea>
+      <button class="send-btn" onclick="sendMsg()">ENVIAR</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var myID = '';
+var myPeer = null;
+var conn = null;
+var typingTimer = null;
+var currentPeerID = '';
+var pendingConn = null; // conexión esperando clave
+
+// ── CRYPTO (Web Crypto API) ──
+function getKey(peerID) {
+  return localStorage.getItem('key_' + peerID) || '';
+}
+function setKey(peerID, key) {
+  localStorage.setItem('key_' + peerID, key);
+}
+
+async function deriveKey(password) {
+  var enc = new TextEncoder();
+  var keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: enc.encode('pixelchat-salt'), iterations: 100000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptText(text, password) {
+  var key = await deriveKey(password);
+  var iv = crypto.getRandomValues(new Uint8Array(12));
+  var enc = new TextEncoder();
+  var encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, enc.encode(text));
+  var combined = new Uint8Array(iv.byteLength + encrypted.byteLength);
+  combined.set(iv, 0);
+  combined.set(new Uint8Array(encrypted), iv.byteLength);
+  return btoa(String.fromCharCode(...combined));
+}
+
+async function decryptText(ciphertext, password) {
+  try {
+    var bytes = Uint8Array.from(atob(ciphertext), function(c){ return c.charCodeAt(0); });
+    var iv = bytes.slice(0, 12);
+    var data = bytes.slice(12);
+    var key = await deriveKey(password);
+    var dec = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, data);
+    return new TextDecoder().decode(dec);
+  } catch(e) {
+    return '🔒 [MENSAJE CIFRADO - CLAVE INCORRECTA]';
+  }
+}
+
+// ── STORAGE ──
+function loadHistory(peerID) {
+  try {
+    return JSON.parse(localStorage.getItem('chat_' + peerID) || '[]');
+  } catch(e) { return []; }
+}
+
+function saveMsg(peerID, msg) {
+  var history = loadHistory(peerID);
+  history.push(msg);
+  // Guardar últimos 200 mensajes
+  if (history.length > 200) {
+    history = history.slice(-200);
+    addMsg('⚠ HISTORIAL LLENO: MENSAJES ANTIGUOS BORRADOS', 'system', peerID);
+  }
+  localStorage.setItem('chat_' + peerID, JSON.stringify(history));
+}
+
+async function saveMsgEncrypted(peerID, msg) {
+  var key = getKey(peerID);
+  var msgToSave = Object.assign({}, msg);
+  if (key && msg.from !== 'system') {
+    msgToSave.text = await encryptText(msg.text, key);
+    msgToSave.encrypted = true;
+  }
+  saveMsg(peerID, msgToSave);
+}
+
+async function decryptMsg(msg, peerID) {
+  var key = getKey(peerID);
+  if (msg.encrypted && key) {
+    var decrypted = Object.assign({}, msg);
+    decrypted.text = await decryptText(msg.text, key);
+    return decrypted;
+  }
+  return msg;
+}
+
+// ── SCREENS ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s) {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  var el = document.getElementById(id);
+  el.style.display = 'flex';
+  el.classList.add('active');
+}
+
+function setLed(on, txt) {
+  document.getElementById('led').className = 'led' + (on ? ' on' : '');
+  document.getElementById('led-text').textContent = txt;
+}
+
+function showErr(id, msg) {
+  var el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(function() { el.classList.remove('show'); }, 3000);
+}
+
+// ── SETUP ID ──
+function saveID() {
+  var val = document.getElementById('setup-id').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (val.length < 3) {
+    showErr('setup-err', 'MÍNIMO 3 CARACTERES');
+    return;
+  }
+  localStorage.setItem('myID', val);
+  myID = val;
+  initPeer();
+}
+
+function changeID() {
+  if (myPeer) { try { myPeer.destroy(); } catch(e) {} myPeer = null; }
+  localStorage.removeItem('myID');
+  showScreen('screen-setup');
+}
+
+// ── PEER INIT ──
+function initPeer() {
+  setLed(false, 'CONECTANDO...');
+  myPeer = new Peer(myID, {
+    host: '0.peerjs.com',
+    port: 443,
+    secure: true,
+    path: '/'
+  });
+
+  myPeer.on('open', function(id) {
+    myID = id;
+    localStorage.setItem('myID', id);
+    document.getElementById('my-id-display').textContent = id;
+    document.getElementById('main-title').innerHTML = 'HOLA ' + id + '_<span class="cursor">█</span>';
+    setLed(true, 'LISTO');
+    showScreen('screen-main');
+  });
+
+  myPeer.on('connection', function(c) {
+    // Alguien se conectó a nosotros
+    setupConn(c);
+  });
+
+  myPeer.on('error', function(err) {
+    if (err.type === 'unavailable-id') {
+      showErr('setup-err', 'ESE ID YA ESTÁ EN USO');
+      localStorage.removeItem('myID');
+      showScreen('screen-setup');
+    } else {
+      setLed(false, 'OFFLINE');
+      showErr('main-err', 'ERROR: ' + err.type);
+    }
+  });
+
+  myPeer.on('disconnected', function() {
+    setLed(false, 'OFFLINE');
+    // Intentar reconectar automáticamente
+    setTimeout(function() {
+      if (myPeer && !myPeer.destroyed) {
+        myPeer.reconnect();
+        setLed(false, 'RECONECTANDO...');
+      }
+    }, 3000);
+  });
+}
+
+// ── CONECTAR A OTRO ──
+function connectToPeer() {
+  var pid = document.getElementById('peer-id-input').value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (!pid) { showErr('main-err', 'INGRESA UN ID'); return; }
+  if (pid === myID) { showErr('main-err', 'ESE ES TU PROPIO ID'); return; }
+
+  showScreen('screen-connecting');
+  document.getElementById('connecting-text').textContent = 'BUSCANDO ' + pid + '...';
+
+  var c = myPeer.connect(pid, { reliable: true });
+  setupConn(c);
+
+  // Timeout si no conecta
+  var timeout = setTimeout(function() {
+    if (!conn || conn.open === false) {
+      try { c.close(); } catch(e) {}
+      conn = null;
+      showErr('main-err', pid + ' NO DISPONIBLE');
+      showScreen('screen-main');
+    }
+  }, 10000);
+
+  c.on('open', function() { clearTimeout(timeout); });
+}
+
+function cancelConnect() {
+  if (conn) { try { conn.close(); } catch(e) {} conn = null; }
+  showScreen('screen-main');
+}
+
+// ── SETUP CONEXION ──
+function setupConn(c) {
+  conn = c;
+  currentPeerID = c.peer;
+
+  c.on('open', function() {
+    setLed(true, 'ONLINE');
+    document.getElementById('peer-name-label').textContent = currentPeerID;
+
+    var existingKey = getKey(currentPeerID);
+    if (!existingKey) {
+      // Pedir clave por primera vez
+      pendingConn = c;
+      document.getElementById('key-peer-label').textContent = currentPeerID;
+      document.getElementById('key-input').value = '';
+      showScreen('screen-key');
+    } else {
+      openChat();
+    }
+  });
+
+  c.on('data', function(data) {
+    try {
+      var d = JSON.parse(data);
+      if (d.type === 'msg') {
+        document.getElementById('typing').classList.remove('show');
+        var key = getKey(currentPeerID);
+        var ciphertext = d.text;
+        (key ? decryptText(ciphertext, key) : Promise.resolve(ciphertext)).then(function(plaintext) {
+          var msgObj = { from: 'them', text: ciphertext, time: d.time || Date.now(), encrypted: !!key };
+          saveMsg(currentPeerID, msgObj);
+          renderMsg({ from: 'them', text: plaintext, time: msgObj.time }, currentPeerID);
+        });
+      } else if (d.type === 'typing') {
+        document.getElementById('typing').classList.add('show');
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(function() {
+          document.getElementById('typing').classList.remove('show');
+        }, 2000);
+      }
+    } catch(e) {}
+  });
+
+  c.on('close', function() {
+    setLed(false, 'OFFLINE');
+    addMsg('★ CONTACTO DESCONECTADO ★', 'system', currentPeerID);
+    conn = null;
+  });
+
+  c.on('error', function(e) {
+    setLed(false, 'OFFLINE');
+    addMsg('★ ERROR DE CONEXION ★', 'system', currentPeerID);
+  });
+}
+
+function openChat() {
+  renderHistory(currentPeerID);
+  showScreen('screen-chat');
+  addMsg('★ CONECTADO CON ' + currentPeerID + ' ★', 'system', currentPeerID);
+}
+
+// ── PANTALLA DE CLAVE ──
+function confirmKey() {
+  var key = document.getElementById('key-input').value.trim();
+  if (key.length < 1) { showErr('key-err', 'INGRESA UNA CLAVE'); return; }
+  // Borrar historial viejo
+  localStorage.removeItem('chat_' + currentPeerID);
+  setKey(currentPeerID, key);
+  openChat();
+}
+
+function cancelKey() {
+  if (conn) { try { conn.close(); } catch(e) {} conn = null; }
+  pendingConn = null;
+  setLed(myPeer && !myPeer.disconnected ? true : false, myPeer && !myPeer.disconnected ? 'LISTO' : 'OFFLINE');
+  showScreen('screen-main');
+}
+
+function resetKey() {
+  localStorage.removeItem('key_' + currentPeerID);
+  localStorage.removeItem('chat_' + currentPeerID);
+  if (conn) { try { conn.close(); } catch(e) {} conn = null; }
+  // No tocar myPeer, solo volver al menú
+  setLed(true, 'LISTO');
+  showScreen('screen-main');
+  showErr('main-err', 'CLAVE BORRADA. RECONECTÁ PARA PONER NUEVA');
+}
+
+// ── MENSAJES ──
+async function renderHistory(peerID) {
+  var msgs = document.getElementById('messages');
+  msgs.innerHTML = '';
+  var history = loadHistory(peerID);
+  for (var i = 0; i < history.length; i++) {
+    var m = await decryptMsg(history[i], peerID);
+    renderMsg(m, peerID, true);
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function renderMsg(msgObj, peerID, fromHistory) {
+  var msgs = document.getElementById('messages');
+  if (msgObj.from === 'system') {
+    var el = document.createElement('div');
+    el.className = 'system-msg';
+    el.textContent = msgObj.text;
+    msgs.appendChild(el);
+    msgs.scrollTop = msgs.scrollHeight;
+    return;
+  }
+  var el = document.createElement('div');
+  el.className = 'msg ' + msgObj.from;
+  var label = msgObj.from === 'me' ? myID : peerID;
+  var time = msgObj.time ? new Date(msgObj.time).toLocaleTimeString('es', {hour:'2-digit',minute:'2-digit'}) : '';
+  el.innerHTML = '<div class="msg-header">' + label + '</div>' +
+    '<div class="msg-bubble">' + esc(msgObj.text) + '</div>' +
+    '<div class="msg-time">' + time + '</div>';
+  msgs.appendChild(el);
+  if (!fromHistory) msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addMsg(text, from, peerID) {
+  renderMsg({ from: from, text: text, time: Date.now() }, peerID || currentPeerID);
+}
+
+function esc(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+// ── ENVIAR ──
+async function sendMsg() {
+  var input = document.getElementById('msg-input');
+  var text = input.value.trim();
+  if (!text) return;
+  if (!conn || !conn.open) {
+    showErr('main-err', 'SIN CONEXION');
+    return;
+  }
+  var key = getKey(currentPeerID);
+  var textToSend = key ? await encryptText(text, key) : text;
+  var msgObj = { from: 'me', text: textToSend, time: Date.now(), encrypted: !!key };
+  conn.send(JSON.stringify({ type: 'msg', text: textToSend, time: msgObj.time }));
+  saveMsg(currentPeerID, msgObj);
+  // Mostrar en pantalla sin cifrar
+  renderMsg({ from: 'me', text: text, time: msgObj.time }, currentPeerID);
+  input.value = '';
+  autoResize(input);
+}
+
+function sendTyping() {
+  if (conn && conn.open) conn.send(JSON.stringify({ type: 'typing' }));
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+// ── DESCONECTAR ──
+function disconnect() {
+  if (conn) { try { conn.close(); } catch(e) {} conn = null; }
+  setLed(myPeer && !myPeer.disconnected ? true : false, myPeer && !myPeer.disconnected ? 'LISTO' : 'OFFLINE');
+  showScreen('screen-main');
+}
+
+// ── INICIO ──
+window.onload = function() {
+  var savedID = localStorage.getItem('myID');
+  if (savedID) {
+    myID = savedID;
+    document.getElementById('setup-id').value = savedID;
+    initPeer();
+  } else {
+    showScreen('screen-setup');
+  }
+};
+</script>
+</body>
+</html>
